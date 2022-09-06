@@ -139,6 +139,8 @@ public class AzureVMAgent extends AbstractCloudSlave implements TrackedItem {
 
     private long creationTime;
 
+    private RetentionStrategy<AzureVMComputer> retentionStrategy;
+
     @DataBoundConstructor
     public AzureVMAgent(
             String name,
@@ -214,6 +216,7 @@ public class AzureVMAgent extends AbstractCloudSlave implements TrackedItem {
         this.uamiID = uamiID;
         this.template = template;
         this.creationTime = System.currentTimeMillis();
+        this.retentionStrategy = retentionStrategy;
     }
 
     public AzureVMAgent(
@@ -348,6 +351,10 @@ public class AzureVMAgent extends AbstractCloudSlave implements TrackedItem {
         return cleanUpReason;
     }
 
+    public RetentionStrategy<AzureVMComputer> getRetentionStrategy() {
+        return retentionStrategy;
+    }
+
     private void setCleanUpAction(CleanUpAction cleanUpAction) {
         // Translate a default cleanup action into what we want for a particular
         // node
@@ -362,6 +369,11 @@ public class AzureVMAgent extends AbstractCloudSlave implements TrackedItem {
     }
 
     private void setCleanUpReason(Localizable cleanUpReason) {
+        if (cleanUpReason != null) {
+            LOGGER.log(Level.INFO, "REASON: CHANGED to {1}", cleanUpReason.toString());
+        } else {
+            LOGGER.log(Level.INFO, "REASON: IS NULL");
+        }
         this.cleanUpReason = cleanUpReason;
     }
 
@@ -369,6 +381,7 @@ public class AzureVMAgent extends AbstractCloudSlave implements TrackedItem {
      * Clear the cleanup action and reset to the default behavior.
      */
     public void clearCleanUpAction() {
+        LOGGER.log(Level.INFO, "REASON: CLEAR CLEANUP ACTION");
         setCleanUpAction(CleanUpAction.DEFAULT);
         setCleanUpReason(null);
     }
@@ -377,6 +390,7 @@ public class AzureVMAgent extends AbstractCloudSlave implements TrackedItem {
      * Block any cleanup from happening.
      */
     public void blockCleanUpAction() {
+        LOGGER.log(Level.INFO, "REASON: BLOCK CLEANUP ACTION");
         setCleanUpAction(CleanUpAction.BLOCK);
         setCleanUpReason(null);
     }
@@ -394,6 +408,7 @@ public class AzureVMAgent extends AbstractCloudSlave implements TrackedItem {
             // Set the machine temporarily offline machine with an offline reason.
             computer.setTemporarilyOffline(true, OfflineCause.create(reason));
         }
+        LOGGER.log(Level.INFO, "REASON: IN SETCLEANUP ACTION WITH REASON {0}", reason);
         setCleanUpAction(action);
         setCleanUpReason(reason);
     }

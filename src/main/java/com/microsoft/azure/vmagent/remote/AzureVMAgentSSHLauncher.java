@@ -123,6 +123,7 @@ public class AzureVMAgentSSHLauncher extends ComputerLauncher {
         } finally {
             if (session == null) {
                 slaveComputer.setAcceptingTasks(false);
+                LOGGER.log(Level.INFO, "REASON: AGENT FAILED TO CONNECT 1");
                 agent.setCleanUpAction(CleanUpAction.DELETE, Messages._Agent_Failed_To_Connect());
                 return;
             }
@@ -267,6 +268,7 @@ public class AzureVMAgentSSHLauncher extends ComputerLauncher {
                 }
                 slaveComputer.setAcceptingTasks(false);
                 // Set the machine to be deleted by the cleanup task
+                LOGGER.log(Level.INFO, "REASON: AGENT FAILED TO CONNECT LAUNCH 2");
                 agent.setCleanUpAction(CleanUpAction.DELETE, cleanUpReason);
             }
         }

@@ -117,6 +117,7 @@ public class AzureVMCloudRetensionStrategy extends AzureVMCloudBaseRetentionStra
                 // It's unlikely we'll be able to shut it down properly ever.
                 AzureVMAgent node = agentNode.getNode();
                 if (node != null) {
+                    LOGGER.log(Level.INFO, "REASON: FAILED INITIAL SHUTDOWN OR DELETE 1");
                     node.setCleanUpAction(CleanUpAction.DELETE, Messages._Failed_Initial_Shutdown_Or_Delete());
                 }
             } catch (Exception e) {
@@ -126,6 +127,7 @@ public class AzureVMCloudRetensionStrategy extends AzureVMCloudBaseRetentionStra
                 // It's unlikely we'll be able to shut it down properly ever.
                 AzureVMAgent node = agentNode.getNode();
                 if (node != null) {
+                    LOGGER.log(Level.INFO, "REASON: FAILED INITIAL SHUTDOWN OR DELETE 2");
                     node.setCleanUpAction(CleanUpAction.DELETE, Messages._Failed_Initial_Shutdown_Or_Delete());
                 }
             }

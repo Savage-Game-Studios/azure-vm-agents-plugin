@@ -511,6 +511,11 @@ public class AzureVMAgentCleanUpTask extends AsyncPeriodicWork {
                     continue;
                 }
 
+                final hudson.slaves.RetentionStrategy retentionStrategy = agentNode.getRetentionStrategy();
+                if (retentionStrategy.check(computer) > 0) {
+                    continue;
+                }
+
                 // Machine exists but is in either DELETE or SHUTDOWN state.
                 // Execute that action.
                 Callable<Void> task = () -> {
@@ -545,6 +550,7 @@ public class AzureVMAgentCleanUpTask extends AsyncPeriodicWork {
                             exception);
                     // In case the node had a non-delete cleanup action before,
                     // set the cleanup action to delete
+                    LOGGER.log(Level.INFO, "REASON: FAILED INITIAL SHUTDOWN OR DELETE CLEANVMS");
                     agentNode.setCleanUpAction(CleanUpAction.DELETE, Messages._Failed_Initial_Shutdown_Or_Delete());
                 }
             }

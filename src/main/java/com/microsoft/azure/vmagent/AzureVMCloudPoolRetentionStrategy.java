@@ -123,6 +123,7 @@ public class AzureVMCloudPoolRetentionStrategy extends AzureVMCloudBaseRetention
                     // It's unlikely we'll be able to shut it down properly ever.
                     AzureVMAgent node = agentComputer.getNode();
                     if (node != null) {
+                        LOGGER.log(Level.INFO, "REASON: FAILED INITIAL SHUTDOWN OR DELETE DURING TRY DELETE WHEN IDLE");
                         node.setCleanUpAction(CleanUpAction.DELETE, Messages._Failed_Initial_Shutdown_Or_Delete());
                     }
                 }
