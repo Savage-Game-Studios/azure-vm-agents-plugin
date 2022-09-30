@@ -32,6 +32,7 @@ import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class AzureUtil {
 
@@ -545,6 +546,43 @@ public final class AzureUtil {
     public static String getLocationNameByLabel(String label) {
         return label.toLowerCase().replace(" ", "");
     }
+
+    private static final AtomicLong UNIQUE_TIMESTAMPER = new AtomicLong(0);
+    private static final int UNIQUE_TIMESTAMPER_MAX_ITERATIONS = 1024 * 16;
+
+    /**
+     * Attempt to get a process-wide unique timestamp with a counter replacing the milliseconds part.
+     * Will return at most 1000 unique timestamps per second, throwing an exception if more are requested.
+     * Thread-safe.
+     * @return A process-wide unique timestamp that is accurate to the second.
+     * @throws Exception
+     */
+    public static long getUniqueTimestamp() throws Exception {
+        long uniqueTimestamp = 0;
+        for (int attempt = 0; attempt < UNIQUE_TIMESTAMPER_MAX_ITERATIONS; ++attempt) {
+            final int mil = 1000;
+            final long currentTimeRounded = (System.currentTimeMillis() / mil) * mil;
+            long oldValue = UNIQUE_TIMESTAMPER.get();
+            long newValue = oldValue < currentTimeRounded ? currentTimeRounded : (oldValue + 1);
+            if (((oldValue / mil) * mil) > currentTimeRounded) {
+                throw new Exception("failed to allocate unique timestamp: rate exceeded 1000/sec");
+            }
+            if (UNIQUE_TIMESTAMPER.compareAndSet(oldValue, newValue)) {
+                uniqueTimestamp = newValue;
+                break;
+            }
+        }
+
+        if (uniqueTimestamp == 0) {
+            // This might happen in case of extreme contention where a thread
+            // is simply unable to get a successful CAS in, but in that situation
+            // we're almost certainly exceeding 1000/sec anyway.
+            throw new Exception("failed to allocate unique timestamp: too many attempts");
+        }
+
+        return uniqueTimestamp;
+    }
+
 
     private AzureUtil() {
         // hide constructor

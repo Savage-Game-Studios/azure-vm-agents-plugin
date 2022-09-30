@@ -216,7 +216,7 @@ public final class AzureVMManagementServiceDelegate {
 
             Map<String, Object> properties = AzureVMAgentTemplate.getTemplateProperties(template);
 
-            final Date timestamp = new Date(System.currentTimeMillis());
+            final Date timestamp = new Date(AzureUtil.getUniqueTimestamp());
             final String deploymentName = AzureUtil.getDeploymentName(template.getTemplateName(), timestamp);
             final String vmBaseName = AzureUtil.getVMBaseName(
                     template.getTemplateName(), deploymentName, (String) properties.get("osType"), numberOfAgents);

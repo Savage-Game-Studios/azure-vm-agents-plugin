@@ -2,11 +2,19 @@ package com.microsoft.azure.vmagent;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
+import java.util.List;
+import java.util.HashSet;
+import java.util.concurrent.Future;
 
 import org.junit.Test;
+
+import com.microsoft.azure.vmagent.util.AzureUtil;
 
 public class AzureVMCloudTest {
 
@@ -278,6 +286,64 @@ public class AzureVMCloudTest {
 
         // Then
         assertThat(actual, equalTo(expected));
+    }
+
+    @Test
+    public void uniqueTimestampReturnsUniqueTimestamps() throws Exception {
+        long[] data = new long[512];
+        for (int i = 0; i < 512; ++i) {
+            data[i] = AzureUtil.getUniqueTimestamp();
+        }
+        java.util.HashSet<Long> uniqueTest = new java.util.HashSet<Long>();
+        for (int i = 0; i < 512; ++i) {
+            assert(uniqueTest.add(data[i]));
+        }
+    }
+
+    private static class GetUniqueTimestampsAction implements java.util.concurrent.Callable<long[]> {
+        private int iterations;
+
+        public GetUniqueTimestampsAction(int iterations) {
+            this.iterations = iterations;
+        }
+
+        @Override
+        public long[] call() {
+            long[] data = new long[iterations];
+            for (int i = 0; i < iterations; ++i) {
+                try {
+                    data[i] = AzureUtil.getUniqueTimestamp();
+                }
+                catch(Exception e){
+                    data[i] = -1;
+                }
+            }
+            return data;
+        }
+    }
+
+    @Test
+    public void uniqueTimestampReturnsUniqueTimestampsThreaded() throws Exception {
+        final int cpus = java.lang.Runtime.getRuntime().availableProcessors();
+        final int iterationsPerTask = 900 / cpus;
+
+        final ForkJoinPool taskPool = new ForkJoinPool(cpus);
+        final ArrayList<GetUniqueTimestampsAction> tasks = new ArrayList<>();
+
+        for(int i = 0; i < cpus; ++i){
+            tasks.add(new GetUniqueTimestampsAction(iterationsPerTask));
+        }
+
+        final List<Future<long[]>> futures = taskPool.invokeAll(tasks);
+
+        final HashSet<Long> uniqueTest = new HashSet<Long>();
+        for (Future<long[]> future : futures) {
+            long[] data = future.get();
+            for (int i = 0; i < iterationsPerTask; ++i) {
+                assertThat(data[i], not(equalTo(-1)));
+                assert(uniqueTest.add(data[i]));
+            }
+        }
     }
 
     private static AzureVMAgentTemplate mkTemplate(final String templateName) {
